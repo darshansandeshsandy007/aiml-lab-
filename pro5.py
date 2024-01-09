@@ -1,52 +1,78 @@
+#### Lab 5: Build an Artificial Neural Network by implementing the Backpropagation algorithm and test the same using appropriate data sets.
+
+##### BACKPROPAGATION (training_example, ƞ, nin, nout, nhidden )
+
+
+```python
 import numpy as np
+X = np.array(([2, 9], [1, 5], [3, 6]), dtype=float)
+y = np.array(([92], [86], [89]), dtype=float)
+X = X/np.amax(X,axis=0) # maximum of X array longitudinally
+y = y/100
 
-X = np.array(([2, 9], [1, 5], [3, 6]), dtype=float)     # X = (hours sleeping, hours studying)
-y = np.array(([92], [86], [89]), dtype=float)           # y = score on test
+#Sigmoid Function
+def sigmoid (x):
+    return 1/(1 + np.exp(-x))
 
-# scale units
-X = X/np.amax(X, axis=0)        # maximum of X array
-y = y/100                       # max test score is 100
+#Derivative of Sigmoid Function
+def derivatives_sigmoid(x):
+    return x * (1 - x)
 
-class Neural_Network(object):
-    def __init__(self):
-                            # Parameters
-        self.inputSize = 2
-        self.outputSize = 1
-        self.hiddenSize = 3
-                             # Weights
-        self.W1 = np.random.randn(self.inputSize, self.hiddenSize)        # (3x2) weight matrix from input to hidden layer
-        self.W2 = np.random.randn(self.hiddenSize, self.outputSize)       # (3x1) weight matrix from hidden to output layer
+#Variable initialization
+epoch=5000                #Setting training iterations
+lr=0.1                    #Setting learning rate
+inputlayer_neurons = 2    #number of features in data set
+hiddenlayer_neurons = 3   #number of hidden layers neurons
+output_neurons = 1        #number of neurons at output layer
 
-    def forward(self, X):
-                             #forward propagation through our network
-        self.z = np.dot(X, self.W1)               # dot product of X (input) and first set of 3x2 weights
-        self.z2 = self.sigmoid(self.z)            # activation function
-        self.z3 = np.dot(self.z2, self.W2)        # dot product of hidden layer (z2) and second set of 3x1 weights
-        o = self.sigmoid(self.z3)                 # final activation function
-        return o 
+#weight and bias initialization
+wh=np.random.uniform(size=(inputlayer_neurons,hiddenlayer_neurons))
+bh=np.random.uniform(size=(1,hiddenlayer_neurons))
+wout=np.random.uniform(size=(hiddenlayer_neurons,output_neurons))
+bout=np.random.uniform(size=(1,output_neurons))
 
-    def sigmoid(self, s):
-        return 1/(1+np.exp(-s))     # activation function 
 
-    def sigmoidPrime(self, s):
-        return s * (1 - s)          # derivative of sigmoid
+#draws a random range of numbers uniformly of dim x*y
+for i in range(epoch):
     
-    def backward(self, X, y, o):
-                                    # backward propgate through the network
-        self.o_error = y - o        # error in output
-        self.o_delta = self.o_error*self.sigmoidPrime(o) # applying derivative of sigmoid to 
-        self.z2_error = self.o_delta.dot(self.W2.T)    # z2 error: how much our hidden layer weights contributed to output error
-        self.z2_delta = self.z2_error*self.sigmoidPrime(self.z2) # applying derivative of sigmoid to z2 error
-        self.W1 += X.T.dot(self.z2_delta)       # adjusting first set (input --> hidden) weights
-        self.W2 += self.z2.T.dot(self.o_delta)  # adjusting second set (hidden --> output) weights
+#Forward Propogation
+    hinp1=np.dot(X,wh)
+    hinp=hinp1 + bh
+    hlayer_act = sigmoid(hinp)
+    outinp1=np.dot(hlayer_act,wout)
+    outinp= outinp1+ bout
+    output = sigmoid(outinp)
+    
+#Backpropagation
+    EO = y-output
+    outgrad = derivatives_sigmoid(output)
+    d_output = EO* outgrad
+    EH = d_output.dot(wout.T)
 
-    def train (self, X, y):
-        o = self.forward(X)
-        self.backward(X, y, o)
+#how much hidden layer wts contributed to error
+    hiddengrad = derivatives_sigmoid(hlayer_act)
+    d_hiddenlayer = EH * hiddengrad
+    
+# dotproduct of nextlayererror and currentlayerop
+    wout += hlayer_act.T.dot(d_output) *lr
+    wh += X.T.dot(d_hiddenlayer) *lr
+    
+    
+print("Input: \n" + str(X))
+print("Actual Output: \n" + str(y))
+print("Predicted Output: \n" ,output)
+```
 
-NN = Neural_Network()
-print ("\nInput: \n" + str(X))
-print ("\nActual Output: \n" + str(y)) 
-print ("\nPredicted Output: \n" + str(NN.forward(X)))
-print ("\nLoss: \n" + str(np.mean(np.square(y - NN.forward(X)))))     # mean sum squared loss)
-NN.train(X, y)
+    Input: 
+    [[0.66666667 1.        ]
+     [0.33333333 0.55555556]
+     [1.         0.66666667]]
+    Actual Output: 
+    [[0.92]
+     [0.86]
+     [0.89]]
+    Predicted Output: 
+     [[0.89571283]
+     [0.88239245]
+     [0.89153673]]
+    
