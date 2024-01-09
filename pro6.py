@@ -1,33 +1,44 @@
+# import necessary libarities
 import pandas as pd
-msg = pd.read_csv('document.csv', names=['message', 'label'])
-print("Total Instances of Dataset: ", msg.shape[0])
-msg['labelnum'] = msg.label.map({'pos': 1, 'neg': 0})
+from sklearn import tree
+from sklearn.preprocessing import LabelEncoder
+from sklearn.naive_bayes import GaussianNB
 
-X = msg.message
-y = msg.labelnum
+# load data from CSV
+data = pd.read_csv('tennisdata.csv')
+print("THe first 5 values of data is :\n",data.head())
+
+# obtain Train data and Train output
+X = data.iloc[:,:-1]
+print("\nThe First 5 values of train data is\n",X.head())
+
+y = data.iloc[:,-1]
+print("\nThe first 5 values of Train output is\n",y.head())
+
+# Convert then in numbers 
+le_outlook = LabelEncoder()
+X.Outlook = le_outlook.fit_transform(X.Outlook)
+
+le_Temperature = LabelEncoder()
+X.Temperature = le_Temperature.fit_transform(X.Temperature)
+
+le_Humidity = LabelEncoder()
+X.Humidity = le_Humidity.fit_transform(X.Humidity)
+
+le_Windy = LabelEncoder()
+X.Windy = le_Windy.fit_transform(X.Windy)
+
+print("\nNow the Train data is :\n",X.head())
+
+le_PlayTennis = LabelEncoder()
+y = le_PlayTennis.fit_transform(y)
+print("\nNow the Train output is\n",y)
+
 from sklearn.model_selection import train_test_split
-Xtrain, Xtest, ytrain, ytest = train_test_split(X, y)
-from sklearn.feature_extraction.text import CountVectorizer
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.20)
 
-count_v = CountVectorizer()
-Xtrain_dm = count_v.fit_transform(Xtrain)
-Xtest_dm = count_v.transform(Xtest)
+classifier = GaussianNB()
+classifier.fit(X_train,y_train)
 
-df = pd.DataFrame(Xtrain_dm.toarray(),columns=count_v.get_feature_names())
-print(df[0:5])
-
-from sklearn.naive_bayes import MultinomialNB
-clf = MultinomialNB()
-clf.fit(Xtrain_dm, ytrain)
-pred = clf.predict(Xtest_dm)
-
-for doc, p in zip(Xtrain, pred):
-    p = 'pos' if p == 1 else 'neg'
-    print("%s -> %s" % (doc, p))
-
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
-print('Accuracy Metrics: \n')
-print('Accuracy: ', accuracy_score(ytest, pred))
-print('Recall: ', recall_score(ytest, pred))
-print('Precision: ', precision_score(ytest, pred))
-print('Confusion Matrix: \n', confusion_matrix(ytest, pred))
+from sklearn.metrics import accuracy_score
+print("Accuracy is:",accuracy_score(classifier.predict(X_test),y_test))
